@@ -29,8 +29,9 @@ sudo pip install -U docker-compose
 docker-compose up 会自动构建和启动容器
 ``` 
 当编辑了 Dockerfile 之后，执行下面命令重新构建镜像
+```
 docker-compose build nginx                  
-
+``` 
 如果没问题，下次启动时可以以守护模式启用，所有容器将后台运行：  
 ```
 docker-compose up -d
@@ -53,7 +54,6 @@ docker-compose down
 docker system prune --volumes  
 ```
 
-docker system prune --volumes  删除全部容器
 
 
 ### 3. 使用 Composer
