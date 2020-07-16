@@ -1,0 +1,87 @@
+version: "3.2"
+services:
+  php-fpm:
+    build: ./php/
+    ports:
+      - "9000:9000"
+    links:
+      - mysql-db:mysql-db
+      - redis-db:redis-db
+    volumes:
+      - ../app:/data/www:rw
+      - ./php/php.ini:/usr/local/etc/php/php.ini:ro # 当前php配置文件；可以拷贝修改php-dev.ini为想要的配置
+      - ./php/php-fpm.conf:/usr/local/etc/php-fpm.conf:ro
+      - ../logs/php-fpm:/var/log/php-fpm:rw
+    restart: always
+    command: php-fpm
+
+  php70-fpm:
+      build: ./php70/
+      ports:
+        - "9001:9000"
+      links:
+        - mysql-db:mysql-db
+        - redis-db:redis-db
+      volumes:
+        - ../app:/data/www:rw
+        - ./php70/php.ini:/usr/local/etc/php/php.ini:ro # 当前php配置文件；可以拷贝修改php-dev.ini为想要的配置
+        - ./php70/php-fpm.conf:/usr/local/etc/php-fpm.conf:ro
+        - ../logs/php70-fpm:/var/log/php-fpm:rw
+      restart: always
+      command: php-fpm
+
+  nginx:
+    build: ./nginx
+    depends_on:
+      - php-fpm
+    links:
+      - php-fpm:php-fpm
+      - php70-fpm:php70-fpm
+    volumes:
+      - ../app:/data/www:rw
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs/:/etc/nginx/certs
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../logs/nginx:/var/log/nginx
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "443:443"
+    restart: always
+    command: nginx -g 'daemon off;'
+
+  mysql-db:
+    build: ./mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - ../logs/mysql:/var/lib/mysql-logs:rw
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456 # 数据库密码，自行修改
+    restart: always
+    command: "--character-set-server=utf8 --innodb-use-native-aio=0"
+
+  redis-db:
+    build: ./redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ../data/redis:/data
+    restart: always
+
+  zoo1:
+    image: zookeeper:3.4.14
+    restart: always
+    hostname: zoo1
+    container_name: zookeeper_1
+      #domainname: 
+    ports:
+      - 2181:2181
+    volumes:
+      - ../data/zookeeper/zoo1/data:/data
+      - ../data/zookeeper/zoo1/datalog:/datalog
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zoo1:2888:3888
+
